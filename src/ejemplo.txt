@@ -1,0 +1,12 @@
+int funcion2(int x, int y);
+
+int main() {
+    int z = 2;
+    return 0;
+}
+
+int funcion3(int x, int y) {
+    int a;
+    a = 0;
+    return a;
+}

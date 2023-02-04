@@ -1,0 +1,13 @@
+main:
+BeginFunc
+z = 2
+return 0
+EndFunc
+funcion3:
+BeginFunc
+PopParam x
+PopParam y
+a = 0
+return a
+EndFunc
+
