@@ -1,4 +1,4 @@
-// Generated from /home/jpcalcara/Escritorio/TC_2023/FinalTC/src/main/java/com/tc23/Reglas.g4 by ANTLR 4.9.2
+// Generated from /home/jpcalcara/Escritorio/FinalTC/src/main/java/com/tc23/Reglas.g4 by ANTLR 4.9.2
 
     package com.tc23;
 
