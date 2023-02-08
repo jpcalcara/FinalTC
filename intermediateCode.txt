@@ -1,13 +1,28 @@
+funcionM:
+BeginFunc
+PopParam c
+c = c + 20 
+return c
+EndFunc
 main:
 BeginFunc
-z = 2
-return 0
+PopParam w
+t = 10
+pushParam 20
+x = CALL funcionM
+i = 0
+L1:if i>=x goto L2
+h = 3 * x 
+i++
+goto L1
+L2:return t
 EndFunc
-funcion3:
+main2:
 BeginFunc
-PopParam x
-PopParam y
-a = 0
-return a
+PopParam l
+pushParam 5
+y = CALL funcionM
+if y != 4  goto L3
+L3:return j
 EndFunc
 

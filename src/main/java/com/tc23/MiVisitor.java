@@ -12,17 +12,20 @@ import java.util.List;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.Trees;
-
+//recorre la estructura y realiza operaciones en los elementos que componen la estructura
 public class MiVisitor extends ReglasBaseVisitor<String> {
-    private int count_label;
-    private int count_tmp;
-    private String tmp_previous;
-    private String tmp_current;
-    private String code;
-    private boolean tmp_add;
-    private HashMap<String, String> opposites;
-    private String[] operators_logical;
+    private int count_label;//lleva la cuenta de las etiquetas.
+    private int count_tmp;//lleva la cuenta de las variables temporales.
+    private String tmp_previous;//cadena que representa una variable temporal anterior.
+    private String tmp_current;//cadena que representa el nombre de la variable temporal actual
+    private String code;//cadena que almacena el código generado.
+    private boolean tmp_add;//bandera que indica si se deben agregar nuevas variables temporales.
+    private HashMap<String, String> opposites;//mapa que asigna pares de valores opuestos a cada operador de comparación.
+    private String[] operators_logical;//arreglo de cadenas que contiene los operadores lógicos
 
+    /*Inicializa un mapa que contiene pares de operadores logicos opuestos
+     *Cada clave es un operador logico
+    */
     public MiVisitor() {
         this.opposites = new HashMap<String, String>() {{
             put("!=", "==");
@@ -33,13 +36,20 @@ public class MiVisitor extends ReglasBaseVisitor<String> {
             put(">", "<=")
             ;
         }};
+        //arreglo de cadenas que contiene los operadores lógicos "&&" y "||".
         this.operators_logical = new String[]{"&&", "||"};
+        //bandera que indica si se deben agregar nuevas variables temporales.
         this.tmp_add = false;
+        //contador para llevar la cuenta de las etiquetas.
         this.count_label = 0;
+        //contador para llevar la cuenta de las variables temporales.
         this.count_tmp = 0;
+        //cadena para almacenar el código generado.
         this.code = "";
+        //variable temporal anterior.
         this.tmp_previous = "";
-        this.tmp_current = ""; // el nombre de la variable temporal actual por ej t0
+        // el nombre de la variable temporal actual por ej t0
+        this.tmp_current = ""; 
 
     }
 
@@ -67,7 +77,8 @@ public class MiVisitor extends ReglasBaseVisitor<String> {
                 nodes.add(t);
             }
         }
-        // check children
+       /*Se recorren todos los hijos del nodo actual y se llama recursivamente al método "findRuleNodes" 
+       para cada hijo. */
         for (int i = 0; i < t.getChildCount(); i++) {
             if (!(t.getChild(i) instanceof ReglasParser.OperacionesContext)) {
                 findRuleNodes(t.getChild(i), index, nodes);
@@ -80,6 +91,11 @@ public class MiVisitor extends ReglasBaseVisitor<String> {
      * @param string String sobre el cual obtener su última línea
      * @return Devuelve la última línea del String
      */
+    /*recibe una cadena de texto. Convierte la cadena en una lista de líneas utilizando el método "split" y 
+    l separador "\n". Luego, devuelve la última línea de la lista utilizando el método "subList" de la clase ArrayList. 
+    El método "Math.max" se utiliza para asegurarse de que la lista devuelta no sea vacía, incluso si la lista de líneas 
+    original está vacía.
+     */
     public String getLastLine(String string) {
         List<String> lines = Arrays.asList(string.split("\n"));
         return new ArrayList<>(lines.subList(Math.max(0, lines.size() - 1), lines.size())).get(0);
@@ -89,6 +105,14 @@ public class MiVisitor extends ReglasBaseVisitor<String> {
      * separateOR toma un Contexto de operaciones y lo divide dado ||, por ejemplo:
      * @param t Contexto de operaciones aritmetico lógica
      * @return lista de los terminos divididor por ||
+     */
+    /*Crea una lista de nodos vacia, luego se obtienen los nodos correspondientes a la regla disyuncion y factor
+     * Se cuenta la cantidad de operaciones PA en los nodos operations
+     * Se cuenta la cantidad de parametros del arbol
+     * Se recorre la lista aux (contiene los nodos disyuncion)
+     * Si un elemento de aux es una regla disyuncion se agrega su hijo conjuncion a la lista de nodos
+     * Si no se agrega el elemento de aux a la lista de nodos
+     * Se invierte la lista de nodos y se retorna
      */
     private List<ParseTree> separateOR(ParseTree t) {
         List<ParseTree> nodes = new ArrayList<ParseTree>();
@@ -119,6 +143,17 @@ public class MiVisitor extends ReglasBaseVisitor<String> {
      * @param t Contexto de Conjuncion
      * @return Lista de los terminos divididos por &&
      */
+    /* Toma el ParseTree(arbol) y separa los nodos "conjuncion" dentro de ese arbol en
+    una lista de nodos, la lista se llena por medio de getNodes que extra los arboles
+    que coincidan con nla regla.
+    Count cuenta la cantidad de nodos "factor" que tienen un PA
+    params cuenta la cantidad de nodos "parametros".
+    Si la cantidad de nodos "conjuncion" es igual a "params" se establece params en 0
+    Luego se itera sobre los nodos "conjuncion" y se agrega a la lista los nodos "igualdad"
+    que esten dentro de los nodos "conjuncion"
+    Se invierte la lista y se retorna
+     * 
+     */
     private List<ParseTree> separateAND(ParseTree t){
         List<ParseTree> nodes = new ArrayList<ParseTree>();
         List<ParseTree> aux = getNodes(t, ReglasParser.RULE_conjuncion);
@@ -138,6 +173,7 @@ public class MiVisitor extends ReglasBaseVisitor<String> {
                 nodes.add(aux.get(i));
             }
         }
+        //se  invierte la lista
         Collections.reverse(nodes);
         return nodes;
     }
@@ -148,18 +184,30 @@ public class MiVisitor extends ReglasBaseVisitor<String> {
      * @return  lista con todos los factores separados por operación booleana
      */
     private List<ParseTree> separateComparisons(ParseTree t){
+        //se crea una lista "nodes" de arboles para almacenar los nodos.
         List<ParseTree> nodes = new ArrayList<ParseTree>();
+        //Se crea lista "aux" con los nodos que coinciden con la regla "igualdad"
         List<ParseTree> aux = getNodes(t, ReglasParser.RULE_igualdad);
+        //Se crea  lista "factors" con los nodos que coinciden con al regla "factor"
         List<ParseTree> factors = getNodes(t, ReglasParser.RULE_factor);
         int count = 0;
+        //Se recorre la lista de factores y para cada factor se verifica si el contexto de regla asociado
+        //con el factor es igual a la regla "comparacion" si es asi aumenta el contador.
         for (int i = 0; i < factors.size(); i++) {
             if (((ReglasParser.FactorContext) factors.get(i)).PA() != null){
                 count++;
                 count += getNodes(factors.get(i), ReglasParser.RULE_comparacion).size();
+                //representa el numero de factores en la lista factors que tiene contexto en la regla
+                //rule_comparision
             }
         }
         int params = Trees.findAllRuleNodes(t, ReglasParser.RULE_parametros).size();
         params = aux.size() == params ? 0 : params;
+        /*Se recorre el arreglo aux y se agrega cada elemento a la lista "nodes"
+         *Si se cumple que el primer hijo es una instancia de IgualdadContext,
+         entonces se agrega el hijo a la lista "nodes"
+         Si no se agrega el elemento a la 
+         */
         for (int i = 0; i < aux.size() - params - count; i++) {
             if (aux.get(i).getChild(0) instanceof ReglasParser.IgualdadContext){
                 nodes.add(((ReglasParser.IgualdadContext) aux.get(i)).expresion());
@@ -191,18 +239,22 @@ public class MiVisitor extends ReglasBaseVisitor<String> {
 
     /**
      * divideComparisons toma un contexto y divide a la operación por los operadores aritméticos presentes (==, !=, <, >, <=, >=)
+     * Divide una expresión en comparaciones individuales. La lista "terminos" almacena cada una de las comparaciones. 
+     * Luego, se procesan cada una de estas comparaciones mediante el método "processTerms". Si hay más de una comparación, 
+     * se concatenan los resultados temporales utilizando el método "concatTemps". El operador de comparación se obtiene a 
+     * partir del segundo hijo del nodo padre de cada término.
      * @param ctx
      */
     private void divideComparisons(ParseTree ctx) {
-        List<ParseTree> terminos = separateComparisons(ctx);
+        List<ParseTree> terminos = separateComparisons(ctx);//almacena las comparaciones
         String temp;
         for (int i = 0; i < terminos.size(); i++) {
             temp = tmp_current;
-            processTerms(terminos.get(i));
+            processTerms(terminos.get(i)); //se procesan las comparaciones
             tmp_previous = temp;
-            if (i > 0) {
+            if (i > 0) {//si hay mas de 1 comparacion
                 String operator = terminos.get(i).getParent().getChild(1).getText();
-                concatTemps(operator);
+                concatTemps(operator);//se concatenan los resultados temporales
             }
         }
     }
@@ -257,6 +309,7 @@ public class MiVisitor extends ReglasBaseVisitor<String> {
                 concatTemps(terms.get(i).getParent().getChild(0).getText());
             }
         }
+        
     }
 
     /**
@@ -382,13 +435,16 @@ public class MiVisitor extends ReglasBaseVisitor<String> {
             visitAsignacion((ReglasParser.AsignacionContext) ctx.getChild(2));
         }
         String operation = ctx.getChild(4).getText();
-        code += String.format("L%s:", this.count_label);
+        code += String.format("L%s:", this.count_label);//etiqueta ej: L1
+        //sale del ciclo si no se cumple la condicion if %s goto L2
         this.code += String.format("if %s goto L%s\n", getOpossiteOperation(operation), ++this.count_label);
+        
         visitChildren(ctx.instruccion().ambito());
         code +=  ctx.getChild(6).getText() + "\n";
-        code += String.format("goto L%s", first_label);
+        //goto L1
+        code += String.format("goto L%s", first_label);//vuelve a llamar la etiqueta donde se ejecuta la condicion.
+        //L2: return t
         code += String.format("\nL%s:", this.count_label);
-
         return null;
     }
 
@@ -457,9 +513,8 @@ public class MiVisitor extends ReglasBaseVisitor<String> {
             elseCtx = elseCtx.else_condicional();
         }
 
-        this.code += "L" + lblGo + "\n";
+        this.code += "L" + lblGo + ":"; //retorno cuando no se cumple
         this.count_label = lblGo;
-        
         return null;
     }
 
@@ -510,15 +565,17 @@ public class MiVisitor extends ReglasBaseVisitor<String> {
             this.code += "CALL " + ctx.ID() + "\n";
         }
         return null;
+        
     }
 
     /**
      * printCode guarda el código de tres direcciones en un archivo txt
      */
     public void printCode() {
-        System.out.println("\n=== CODIGO DE TRES DIRECCIONES ===");
+        System.out.println("\n=== CODIGO DE TRES DIRECCIONES ===\n");
         System.out.println(this.code);
         this.printCodeToFile();
+        System.out.println("==================================\n");
     }
 
     /**

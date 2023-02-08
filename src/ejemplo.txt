@@ -1,12 +1,26 @@
-int funcion2(int x, int y);
-
-int main() {
-    int z = 2;
-    return 0;
+int funcionM(int c){
+    c = c + 20;
+    return c;
 }
 
-int funcion3(int x, int y) {
-    int a;
-    a = 0;
-    return a;
+int main(int w){   
+    int t = 10;
+    int x;
+    x = funcionM(20);
+    int h;
+    int i;
+    for(i = 0; i < x; i++){
+        h = 3 * x;
+    }   
+    return t;
 }
+int main2(int l){   
+
+    int y = funcionM(5);
+    int j;
+    if(y == 4){
+        j == 2;
+    }   
+    return j;
+}
+int main22(int l);

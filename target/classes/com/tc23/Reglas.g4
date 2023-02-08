@@ -4,8 +4,9 @@ grammar Reglas;
 @header {
     package com.tc23;
 }
-
+//solo caracteres alfabeticos mayusculas o minusculas
 fragment LETRA : [A-Za-z];
+//Solo caraceteres numericos del 0 al 9
 fragment DIGITO : [0-9];
 
 //Agrupacion
@@ -32,9 +33,9 @@ ELSE : 'else';
 ELSE_IF : 'else if';
 
 //Asignacion
-CARACTER : '\''(LETRA | DIGITO)'\'' ;
-NUMERO : DIGITO+;
-FLOTANTE : NUMERO'.'NUMERO;
+CARACTER : '\''(LETRA | DIGITO)'\'' ;//Alfabetico o Numerico
+NUMERO : DIGITO+;//uno o mas digitos.
+FLOTANTE : NUMERO'.'NUMERO;//digitos decimales
 
 //Operadores matematicos
 SUMA : '+';
@@ -63,7 +64,7 @@ AND : '&&';
 OR : '||';
 
 RETORNO : 'return';
-ID : (LETRA | '_') (LETRA | DIGITO | '_')*;
+ID : (LETRA | '_') (LETRA | DIGITO | '_')*; //para reconocer nombres variables,funciones, etc
 ASIGN : '=';
 AC_POS : '+=';
 AC_NEG : '-=';
@@ -210,7 +211,7 @@ prefix : INC
 	   ;
 
 postfix : INC   // caso b++;
-        | DEC   // caso ++b;
+        | DEC   // caso --b;
         |
         ;
 
